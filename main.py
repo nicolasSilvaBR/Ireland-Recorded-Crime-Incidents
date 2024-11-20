@@ -2,18 +2,19 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
+# Configuração da página
 st.set_page_config(layout='wide')
 
 # Ler os dados e processar o DataFrame
-columns = ['Quarter', 'Garda Division', 'Type of Offence','VALUE']
+columns = ['Quarter', 'Garda Division', 'Type of Offence', 'VALUE']
 df = pd.read_csv('data/cso_data.csv', usecols=columns)
 
+# Processar colunas
 df['Q'] = df['Quarter'].str[-2:]
 df['Year'] = df['Quarter'].str[0:4]
 df.rename(columns={'Quarter': 'Year_Quarter'}, inplace=True)
-df['Garda Division'] = df['Garda Division'].str.replace('Garda Division', '', regex=False)
-df['Garda Division'] = df['Garda Division'].str.strip()
-df = df[['Year_Quarter', 'Year', 'Q', 'Garda Division', 'Type of Offence','VALUE']]
+df['Garda Division'] = df['Garda Division'].str.replace('Garda Division', '', regex=False).str.strip()
+df = df[['Year_Quarter', 'Year', 'Q', 'Garda Division', 'Type of Offence', 'VALUE']]
 
 # Sidebar com opções de seleção
 with st.sidebar:
@@ -37,13 +38,27 @@ filtered_df = df[
     ((df['Type of Offence'].isin(selected_offence)) | ('All' in selected_offence))
 ]
 
-# Limpeza de dados
-df['Year_Quarter'] = df['Year_Quarter'].str.strip()  # Remover espaços extras
-df = df.dropna(subset=['Year_Quarter'])  # Remover valores nulos
+# Agrupar por 'Year_Quarter' e somar os valores
+year_quarter_sum = filtered_df.groupby('Year_Quarter')['VALUE'].sum().reset_index()
 
+st.subheader(selected_offence)
+# Plotar o gráfico de linha com Plotly
+fig = px.line(
+    year_quarter_sum,
+    x='Year_Quarter',
+    y='VALUE',
+    markers=True,  # Adiciona marcadores nos pontos
+    title='Soma dos Valores por Ano e Trimestre'
+)
 
-counts = df['Year_Quarter'].value_counts()
-counts
+# Personalizar os eixos
+fig.update_layout(
+    xaxis_title='Year_Quarter',
+    template='plotly_white'  # Tema do gráfico
+)
+
+# Mostrar o gráfico no Streamlit
+st.plotly_chart(fig, use_container_width=True)
 
 # Mostrar o DataFrame filtrado
 st.dataframe(filtered_df, use_container_width=True, hide_index=True)
