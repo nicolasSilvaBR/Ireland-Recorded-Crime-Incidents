@@ -1,6 +1,8 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+from functions.line_chart import line_chart
+from functions.bar_chart import bar_chart
 
 # Configuração da página
 st.set_page_config(layout='wide')
@@ -40,25 +42,28 @@ filtered_df = df[
 
 # Agrupar por 'Year_Quarter' e somar os valores
 year_quarter_sum = filtered_df.groupby('Year_Quarter')['VALUE'].sum().reset_index()
+year = filtered_df.groupby('Year')['VALUE'].sum().reset_index()
 
 st.subheader(selected_offence)
 # Plotar o gráfico de linha com Plotly
-fig = px.line(
-    year_quarter_sum,
-    x='Year_Quarter',
-    y='VALUE',
-    markers=True,  # Adiciona marcadores nos pontos
-    title='Soma dos Valores por Ano e Trimestre'
-)
+#dataset, x_axis, y_axis, title, x_axis_title, y_axis_title
+line_chart(
+        year_quarter_sum,                       # Data source
+        'Year_Quarter',                         # Categorical Column (datetime)
+        'VALUE',                                # Numerical Column (number)
+        'Crime by Year/Quarter', # Chart Title
+        'Year_Quarter',                          # X Axis Title
+        ''
+    )
 
-# Personalizar os eixos
-fig.update_layout(
-    xaxis_title='Year_Quarter',
-    template='plotly_white'  # Tema do gráfico
+bar_chart(
+        year,
+        'Year',
+        'VALUE',
+        'Crimes by Year',
+        '',
+        ''
 )
-
-# Mostrar o gráfico no Streamlit
-st.plotly_chart(fig, use_container_width=True)
 
 # Mostrar o DataFrame filtrado
 st.dataframe(filtered_df, use_container_width=True, hide_index=True)
